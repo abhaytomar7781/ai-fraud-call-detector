@@ -7,7 +7,7 @@ import os
 st.set_page_config(page_title="AI Fraud Call Detector", layout="centered")
 
 st.title("📞 AI-Powered Fraud Call Detector")
-st.write("Upload a call recording and get transcription + fraud risk.")
+st.write("Upload a call recording and get transcription + fraud risk percentage.")
 
 @st.cache_resource
 def load_whisper_model():
@@ -34,25 +34,51 @@ if uploaded_file is not None:
 
     os.remove(temp_audio_path)
 
-    fraud_keywords = [
-        "otp", "bank", "account", "blocked", "kyc",
-        "urgent", "verify", "pin", "credit card", "lottery"
-    ]
+    # 🔥 Weighted fraud keywords
+    fraud_keywords = {
+        "otp": 4,
+        "bank": 3,
+        "account": 3,
+        "blocked": 2,
+        "kyc": 3,
+        "urgent": 2,
+        "verify": 2,
+        "pin": 4,
+        "credit card": 4,
+        "transfer money": 5,
+        "refund": 2
+    }
 
-    score = 0
+    total_score = 0
     matched_words = []
 
-    for word in fraud_keywords:
-        if word in text.lower():
-            score += 1
+    text_lower = text.lower()
+
+    for word, weight in fraud_keywords.items():
+        if word in text_lower:
+            total_score += weight
             matched_words.append(word)
 
-    st.subheader("🚨 Fraud Detection Result")
+    max_possible_score = sum(fraud_keywords.values())
 
-    if score >= 3:
-        st.error("⚠️ High Risk: This call looks like a FRAUD call")
+    fraud_percentage = (total_score / max_possible_score) * 100
+    fraud_percentage = min(fraud_percentage, 100)
+
+    st.subheader("🚨 Fraud Risk Analysis")
+
+    # 📊 Show progress bar
+    st.progress(int(fraud_percentage))
+
+    # 🎯 Risk level display
+    if fraud_percentage > 70:
+        st.error(f"🚨 High Risk: {fraud_percentage:.1f}%")
+    elif fraud_percentage > 40:
+        st.warning(f"⚠️ Moderate Risk: {fraud_percentage:.1f}%")
     else:
-        st.success("✅ Low Risk: This call seems SAFE")
+        st.success(f"✅ Low Risk: {fraud_percentage:.1f}%")
 
-    st.write("**Matched suspicious words:**", matched_words)
-    st.write("**Risk Score:**", score)
+    if matched_words:
+        st.write("🔎 Suspicious keywords detected:")
+        st.write(", ".join(matched_words))
+    else:
+        st.write("No suspicious keywords detected.")
