@@ -36,7 +36,7 @@ if uploaded_file is not None:
 
     fraud_keywords = [
         "otp", "bank", "account", "blocked", "kyc",
-        "urgent", "verify", "pin", "credit card"
+        "urgent", "verify", "pin", "credit card", "lottery"
     ]
 
     score = 0
